@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  test:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,5 +30,22 @@ jobs:
       - name: Run tests
         run: ./mvnw test
 
-      - name: Build Docker image
-        run: docker build -t opshub:latest
+      - name: Configure AWS credentials
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::079184685187:role/GitHubActions-ECR-OpsHub
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push'
+        env:
+          ECR_REGISTRY: 079184685187.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: opshub
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest

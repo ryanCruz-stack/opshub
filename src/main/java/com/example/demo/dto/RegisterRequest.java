@@ -1,20 +1,12 @@
 package com.example.demo.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-
-public class CreateUserRequest {
+public class RegisterRequest {
     
-    @NotBlank(message = "Name is required")
     private String name;
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid") 
     private String email;
-
     private String password;
 
-    public CreateUserRequest(String name, String email, String password) {
+    public RegisterRequest(String name, String email, String password) {
         this.name = name;
         this.email = email;
         this.password = password;

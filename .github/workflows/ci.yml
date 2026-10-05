@@ -37,6 +37,26 @@ jobs:
           echo "Ref: $GITHUB_REF"
           echo "Event: $GITHUB_EVENT_NAME"
 
+      - name: Debug OIDC claims
+        if: github.event_name == 'push'
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        run: |
+          TOKEN=$(curl -sSf \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['value'])")
+
+          PAYLOAD=$(echo "$TOKEN" | cut -d '.' -f2 | base64 -d 2>/dev/null)
+
+          echo "$PAYLOAD" | python3 -c '
+          import sys, json
+          p=json.load(sys.stdin)
+          for k in ["iss", "aud", "sub", "repository", "ref", "event_name"]:
+              print(f"{k}: {p.get(k)}")
+          '
+
       - name: Configure AWS credentials
         if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v4

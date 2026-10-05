@@ -30,6 +30,13 @@ jobs:
       - name: Run tests
         run: ./mvnw test
 
+      - name: Debug GitHub identity
+        if: github.event_name == 'push'
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Ref: $GITHUB_REF"
+          echo "Event: $GITHUB_EVENT_NAME"
+
       - name: Configure AWS credentials
         if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@v4
